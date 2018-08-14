@@ -64,3 +64,8 @@ swiftmailer:
     username: '%mailer_user%'
     password: '%mailer_password%'
     spool: { type: memory }
+
+# Nelmio/Api-Doc-Bundle Configuration
+nelmio_api_doc: 
+    cache:
+        enabled: true
