@@ -29,12 +29,21 @@ class File
     /**
      * @var string
      *
-     * @ORM\Column(name="filename", type="string", length=190, unique=true)
+     * @ORM\Column(name="filename", type="string", length=190, unique=false)
      * @Serializer\Type("string")
      * @Assert\NotBlank()
      * @Assert\Type("string")
      */
     private $filename;
+
+    /**
+     * @var string
+     *
+     * @ORM\Column(name="internal_filename", type="string", length=190, unique=true, nullable=true)
+     * @Serializer\Type("string")
+     * @Assert\Type("string")
+     */
+    private $internal_filename;
 
     /**
      * @var integer
@@ -108,6 +117,30 @@ class File
     }
 
     /**
+     * Set internal_filename
+     *
+     * @param string $internal_filename
+     *
+     * @return File
+     */
+    public function setInternalFilename($internal_filename)
+    {
+        $this->internal_filename = $internal_filename;
+
+        return $this;
+    }
+
+    /**
+     * Get internal_filename
+     *
+     * @return string
+     */
+    public function getInternalFilename()
+    {
+        return $this->internal_filename;
+    }
+
+    /**
      * Set status
      *
      * @param boolean $status
@@ -138,7 +171,7 @@ class File
      *
      * @return File
      */
-    public function setCreated_at($created_at)
+    public function setCreatedAt($created_at)
     {
         $this->created_at = $created_at;
 
@@ -150,7 +183,7 @@ class File
      *
      * @return \DateTime
      */
-    public function getCreated_at()
+    public function getCreatedAt()
     {
         return $this->created_at;
     }
@@ -162,7 +195,7 @@ class File
      *
      * @return File
      */
-    public function setUpdated_at($updated_at)
+    public function setUpdatedAt($updated_at)
     {
         $this->updated_at = $updated_at;
 
@@ -174,7 +207,7 @@ class File
      *
      * @return \DateTime
      */
-    public function getUpdated_at()
+    public function getUpdatedAt()
     {
         return $this->updated_at;
     }
@@ -186,7 +219,7 @@ class File
      *
      * @return File
      */
-    public function setDeleted_at($deleted_at)
+    public function setDeletedAt($deleted_at)
     {
         $this->deleted_at = $deleted_at;
 
@@ -198,7 +231,7 @@ class File
      *
      * @return \DateTime
      */
-    public function getDeleted_at()
+    public function getDeletedAt()
     {
         return $this->deleted_at;
     }

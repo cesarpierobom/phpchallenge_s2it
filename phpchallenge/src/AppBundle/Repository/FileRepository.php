@@ -2,6 +2,8 @@
 
 namespace AppBundle\Repository;
 
+use AppBundle\Entity\File;
+
 /**
  * FileRepository
  *
@@ -10,4 +12,49 @@ namespace AppBundle\Repository;
  */
 class FileRepository extends \Doctrine\ORM\EntityRepository
 {
+	public function findNotDeleted($id)
+	{
+		return $this->findOneBy(array("id" => $id, "deleted_at" => null));
+	}
+
+	public function findAllCustom($filename = null, $status = array(), $limit = 25, $offset = 0)
+	{
+		$builder = $this->createQueryBuilder("f");
+
+		$builder->select(array("f"));
+
+		if (!empty($filename)) {
+			$builder->add("where", $builder->expr()->like("f.filename", ":filename"))->setParameter(":filename",$filename);
+		}
+
+		if (!empty($status)) {
+			$builder->add("where", $builder->expr()->in("f.status", ":status"))->setParameter(":status",$status);
+		}
+
+		$builder->add("where", $builder->expr()->isNull("f.deleted_at"));
+		
+		if (!empty($limit)) {
+			$builder->setMaxResults($limit);
+		}
+
+		if (!empty($offset)) {
+			$builder->setFirstResult($offset);
+		}
+
+
+		return $builder->getQuery()->getResult();
+
+	}
+
+	public function insert(File $file)
+	{
+		$this->getEntityManager()->persist($file);
+		$this->getEntityManager()->flush();
+	}
+
+	public function update(File $file)
+	{
+		$this->getEntityManager()->persist($file);
+		$this->getEntityManager()->flush();
+	}
 }
