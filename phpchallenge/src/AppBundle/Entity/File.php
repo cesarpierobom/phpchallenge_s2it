@@ -2,40 +2,75 @@
 
 namespace AppBundle\Entity;
 
+use Doctrine\ORM\Mapping as ORM;
+use JMS\Serializer\Annotation as Serializer;
+use Symfony\Component\Validator\Constraints as Assert;
+
 /**
  * File
+ *
+ * @ORM\Table(name="file")
+ * @ORM\Entity(repositoryClass="AppBundle\Repository\FileRepository")
+ * @Serializer\XmlRoot("file")
  */
 class File
 {
     /**
      * @var int
+     *
+     * @ORM\Column(name="id", type="integer")
+     * @ORM\Id
+     * @ORM\GeneratedValue(strategy="AUTO")
+     * @Serializer\Type("integer")
+     * @Assert\Type("integer")
      */
     private $id;
 
     /**
      * @var string
+     *
+     * @ORM\Column(name="filename", type="string", length=190, unique=true)
+     * @Serializer\Type("string")
+     * @Assert\NotBlank()
+     * @Assert\Type("string")
      */
     private $filename;
 
     /**
-     * @var bool
+     * @var integer
+     *
+     * @ORM\Column(name="status", type="boolean")
+     * @Serializer\Type("integer")
+     * @Assert\Type("integer")
      */
     private $status;
 
     /**
      * @var \DateTime
+     *
+     * @ORM\Column(name="created_at", type="datetime", nullable=true)
+     * @Serializer\Type("DateTime")
+     * @Assert\DateTime()
      */
-    private $createdAt;
+    private $created_at;
 
     /**
      * @var \DateTime
+     *
+     * @ORM\Column(name="updated_at", type="datetime", nullable=true)
+     * @Serializer\Type("DateTime")
+     * @Assert\DateTime()
      */
-    private $updatedAt;
+    private $updated_at;
 
     /**
      * @var \DateTime
+     *
+     * @ORM\Column(name="deleted_at", type="datetime", nullable=true)
+     * @Serializer\Type("DateTime")
+     * @Assert\DateTime()
      */
-    private $deletedAt;
+    private $deleted_at;
 
 
     /**
@@ -97,75 +132,75 @@ class File
     }
 
     /**
-     * Set createdAt
+     * Set created_at
      *
-     * @param \DateTime $createdAt
+     * @param \DateTime $created_at
      *
      * @return File
      */
-    public function setCreatedAt($createdAt)
+    public function setCreated_at($created_at)
     {
-        $this->createdAt = $createdAt;
+        $this->created_at = $created_at;
 
         return $this;
     }
 
     /**
-     * Get createdAt
+     * Get created_at
      *
      * @return \DateTime
      */
-    public function getCreatedAt()
+    public function getCreated_at()
     {
-        return $this->createdAt;
+        return $this->created_at;
     }
 
     /**
-     * Set updatedAt
+     * Set updated_at
      *
-     * @param \DateTime $updatedAt
+     * @param \DateTime $updated_at
      *
      * @return File
      */
-    public function setUpdatedAt($updatedAt)
+    public function setUpdated_at($updated_at)
     {
-        $this->updatedAt = $updatedAt;
+        $this->updated_at = $updated_at;
 
         return $this;
     }
 
     /**
-     * Get updatedAt
+     * Get updated_at
      *
      * @return \DateTime
      */
-    public function getUpdatedAt()
+    public function getUpdated_at()
     {
-        return $this->updatedAt;
+        return $this->updated_at;
     }
 
     /**
-     * Set deletedAt
+     * Set deleted_at
      *
-     * @param \DateTime $deletedAt
+     * @param \DateTime $deleted_at
      *
      * @return File
      */
-    public function setDeletedAt($deletedAt)
+    public function setDeleted_at($deleted_at)
     {
-        $this->deletedAt = $deletedAt;
+        $this->deleted_at = $deleted_at;
 
         return $this;
     }
 
     /**
-     * Get deletedAt
+     * Get deleted_at
      *
      * @return \DateTime
      */
-    public function getDeletedAt()
+    public function getDeleted_at()
     {
-        return $this->deletedAt;
+        return $this->deleted_at;
     }
 }
 
