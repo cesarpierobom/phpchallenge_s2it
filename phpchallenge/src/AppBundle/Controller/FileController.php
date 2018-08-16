@@ -11,6 +11,10 @@ use Sensio\Bundle\FrameworkExtraBundle\Configuration\Method;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\ResponseHeaderBag;
+use Symfony\Component\HttpFoundation\File\MimeType\FileinfoMimeTypeGuesser;
+
 
 class FileController extends FOSRestController
 {
@@ -26,6 +30,11 @@ class FileController extends FOSRestController
      *             "name" = "filename",
      *             "dataType" = "string",
      *             "description" = "Filter files by filename"
+     *         },
+     *         {
+     *             "name" = "status",
+     *             "dataType" = "integer",
+     *             "description" = "Filter files by status. 1 = active, 0 = inactive"
      *         },
      *         {
      *             "name" = "limit",
@@ -61,16 +70,12 @@ class FileController extends FOSRestController
             ->getManager()
             ->getRepository("AppBundle:File");
 
-        $query = $repo->createQueryBuilder("f")
-        ->select("f");
-
-        if ($request->query->has("filename")) {
-            $query->where(
-                $query->expr()->like("f.filename", ":filename")
-            )->setParameter(":filename", "%" . $request->query->get("filename") . "%");
-        }
-
-        $files = $query->getQuery()->getResult();
+        $files = $repo->findAllCustom(
+        	$request->query->get("filename"),
+        	(array) $request->query->get("status"),
+        	$request->query->get("limit"),
+        	$request->query->get("offset")
+        );
 
         $view->setData(new FileCollection($files));
 
@@ -81,7 +86,7 @@ class FileController extends FOSRestController
     /**
      * @Route("/files/{id}", name = "file_show", requirements = {"id" = "\d+"})
      * @Method({"GET"})
-     * @ParamConverter("files", class="AppBundle:File")
+     * @ParamConverter("files", class="AppBundle:File", options = {"repository_method" = "findNotDeleted"})
      * @ApiDoc(
      *     description = "Returns file metadata based on its ID",
      *     output = {
@@ -107,11 +112,11 @@ class FileController extends FOSRestController
 
 
     /**
-     * @Route("/files/{id}/content", name="file_content", requirements={"id" = "\d+"})
+     * @Route("/files/{id}/content", name="get_file_content", requirements={"id" = "\d+"})
      * @Method({"GET"})
-     * @ParamConverter("file", class="AppBundle:File")
+     * @ParamConverter("file", class="AppBundle:File", options = {"repository_method" = "findNotDeleted"})
      * @ApiDoc(
-     *     description = "Returns the file content based on its ID",
+     *     description = "Returns the file content based on its ID. (Does not work in documentation sandbox)",
      *     statusCodes = {
      *         200 = "Returned when successful",
      *         403 = "Returned when the action is unauthorized",
@@ -124,7 +129,29 @@ class FileController extends FOSRestController
      * */
     public function getFileContentAction(Request $request, File $file)
     {
+    	$view = new View();
 
+    	$path = $this->get("kernel")->getRootDir() . DIRECTORY_SEPARATOR . ".." . DIRECTORY_SEPARATOR . "uploads";
+    	$filename = $path . DIRECTORY_SEPARATOR . $file->getInternalFilename();
+    	$originalFilename = $file->getFilename();
+
+    	try {
+    		if ("" != $file->getInternalFilename() && file_exists($filename)) {
+    			$response = new BinaryFileResponse($filename);
+    			$mimeTypeGuesser = new FileinfoMimeTypeGuesser();
+    			$response->headers->set("Content-Type", $mimeTypeGuesser->guess($file->getFilename()));
+    			$response->setContentDisposition(ResponseHeaderBag::DISPOSITION_ATTACHMENT, $file->getFilename());
+    			return $response;
+    		} else {
+    			$view->setStatusCode(404);
+    			$view->setData(array("message"=>"NOT FOUND"));
+        		return $this->handleView($view);
+    		}
+    	} catch (Exception $e) {
+        	$view->setStatusCode(500);
+        	$view->setData($e);
+        	return $this->handleView($view);
+    	}
     }
 
 
@@ -153,11 +180,11 @@ class FileController extends FOSRestController
         $view = new View();
         $file = new File();
 
-        $manager = $this->getDoctrine()->getManager();
+        $repo = $this->getDoctrine()->getManager()->getRepository("AppBundle:File");
 
         $file->setFilename($request->get("filename"))
         ->setStatus((integer) $request->get("status"))
-        ->setCreated_at(date_create_from_format("Y-m-d H:i:s", date("Y-m-d H:i:s")));
+        ->setCreatedAt(date_create_from_format("Y-m-d H:i:s", date("Y-m-d H:i:s")));
 
         $validator = $this->get("validator");
         $errors = $validator->validate($file);
@@ -167,8 +194,7 @@ class FileController extends FOSRestController
             $view->setData($errors);
         } else {
             try {
-                $manager->persist($file);
-                $manager->flush();
+                $repo->insert($file);
 
                 $view->setData($file);
                 $view->setStatusCode(201);
@@ -185,9 +211,12 @@ class FileController extends FOSRestController
     /**
      * @Route("/files/{id}/content", name = "file_content_store", requirements = {"id" = "\d+"})
      * @Method({"POST"})
-     * @ParamConverter("file", class="AppBundle:File")
+     * @ParamConverter("file", class="AppBundle:File", options = {"repository_method" = "findNotDeleted"})
      * @ApiDoc(
      *     description = "Uploads the file contents to the storage based on its ID",
+     *     parameters = {
+     *         {"name" = "file", "dataType" = "file", "required" = true, "description" = "File to be uploaded"}
+     *     },
      *     statusCodes = {
      *         201 = "Returned when the operation is successful and a new resource is created",
      *         403 = "Returned when the action is unauthorized",
@@ -199,14 +228,39 @@ class FileController extends FOSRestController
      * */
     public function storeFileContentAction(Request $request, File $file)
     {
+    	$view = new View();
+    	$path = $this->get("kernel")->getRootDir() . DIRECTORY_SEPARATOR . ".." . DIRECTORY_SEPARATOR . "uploads";
+    	$uploaded = $request->files->get("file");
+    	$newFilename = $this->generateUniqueInternalFilename();
 
+    	if ("" != $file->getInternalFilename() && file_exists($path . DIRECTORY_SEPARATOR . $file->getInternalFilename())) {
+    		$view->setStatusCode(409);
+    		$view->setData(array("message" => "File already exists. Use PUT method to replace it."));
+            return $this->handleView($view);
+    	}
+
+    	try {
+    		$file->setFilename($uploaded->getClientOriginalName());
+    		$file->setInternalFilename($newFilename);
+    		$repo = $this->getDoctrine()->getManager()->getRepository("AppBundle:File");
+			$repo->update($file);
+
+    		$uploaded->move($path , $newFilename);
+    		$view->setStatusCode(201);
+    		$view->setHeader("Location", $this->generateUrl("get_file_content", array("id"=>$file->getId())));
+    	} catch (Exception $e) {
+    		$view->setStatusCode(500);
+    		$view->setData($e);
+    	}
+
+    	return $this->handleView($view);
     }
 
 
     /**
      * @Route("/files/{id}", name="file_delete", requirements = {"id" = "\d+"})
      * @Method({"DELETE"})
-     * @ParamConverter("file", class="AppBundle:File")
+     * @ParamConverter("file", class="AppBundle:File", options = {"repository_method" = "findNotDeleted"})
      * @ApiDoc(
      *     description = "Deletes a file from the database and its contents from the storage",
      *     statusCodes = {
@@ -222,14 +276,20 @@ class FileController extends FOSRestController
     public function deleteFileAction(Request $request, File $file)
     {
         $view = new View();
+        $path = $this->get("kernel")->getRootDir() . DIRECTORY_SEPARATOR . ".." . DIRECTORY_SEPARATOR . "uploads";
+
         try {
-            $manager = $this->getDoctrine()->getManager();
-            $manager->remove($file);
-            $manager->flush();
+        	if ("" != $file->getInternalFilename() && file_exists($path . DIRECTORY_SEPARATOR . $file->getInternalFilename())) {
+        		unlink($path . DIRECTORY_SEPARATOR . $file->getInternalFilename());
+        	}
+
+        	$file->setDeletedAt(date_create_from_format("Y-m-d H:i:s", date("Y-m-d H:i:s")));
+            $repo = $this->getDoctrine()->getManager()->getRepository("AppBundle:File");
+			$repo->update($file);
 
             $view->setStatusCode(204);
         } catch (Exception $e) {
-            $view->setData(array("message"=>$e->getMessage()));
+            $view->setData(array("message" => $e->getMessage()));
             $view->setStatusCode(500);
         }
 
@@ -240,7 +300,7 @@ class FileController extends FOSRestController
     /**
      * @Route("/files/{id}", name="file_replace_metadata", requirements = {"id" = "\d+"})
      * @Method({"PUT"})
-     * @ParamConverter("file", class="AppBundle:File")
+     * @ParamConverter("file", class="AppBundle:File", options = {"repository_method" = "findNotDeleted"})
      * @ApiDoc(
      *     description = "Completely replaces/updates file metadata based on ID",
      *     input = {
@@ -257,7 +317,33 @@ class FileController extends FOSRestController
      * */
     public function replaceFileMetadataAction(Request $request, File $file)
     {
+    	$view = new View();
+        $path = $this->get("kernel")->getRootDir() . DIRECTORY_SEPARATOR . ".." . DIRECTORY_SEPARATOR . "uploads";
 
+        $file->setFilename($request->get("filename"))
+        ->setStatus((integer) $request->get("status"))
+        ->setUpdatedAt(date_create_from_format("Y-m-d H:i:s", date("Y-m-d H:i:s")));
+
+        $validator = $this->get("validator");
+        $errors = $validator->validate($file);
+
+        if (count($errors)) {
+            $view->setStatusCode(400);
+            $view->setData($errors);
+        } else {
+            try {
+                $repo = $this->getDoctrine()->getManager()->getRepository("AppBundle:File");
+				$repo->update($file);
+
+                $view->setData($file);
+                $view->setStatusCode(200);
+            } catch (\Doctrine\DBAL\DBALException $e) {
+                $view->setStatusCode(500);
+                $view->setData($e->getMessage());
+            }
+        }
+
+        return $this->handleView($view);
     }
 
 
@@ -265,7 +351,7 @@ class FileController extends FOSRestController
     /**
      * @Route("/files/{id}", name="file_update_metadata", requirements = {"id" = "\d+"})
      * @Method({"PATCH"})
-     * @ParamConverter("file", class="AppBundle:File")
+     * @ParamConverter("file", class="AppBundle:File", options = {"repository_method" = "findNotDeleted"})
      * @ApiDoc(
      *     description = "Partialy updates file metadata based on ID",
      *     input = {
@@ -282,7 +368,40 @@ class FileController extends FOSRestController
      * */
     public function patchFileMetadataAction(Request $request, File $file)
     {
+    	$view = new View();
 
+        $oldname = $file->getFilename();
+        $path = $this->get("kernel")->getRootDir() . DIRECTORY_SEPARATOR . ".." . DIRECTORY_SEPARATOR . "uploads";
+
+        if ($request->request->has("filename")) {
+        	$file->setFilename($request->request->get("filename"));
+        }
+
+        if ($request->request->has("status")) {
+        	$file->setStatus((integer) $request->request->get("status"));
+        }
+
+        $file->setUpdatedAt(date_create_from_format("Y-m-d H:i:s", date("Y-m-d H:i:s")));
+
+        $validator = $this->get("validator");
+        $errors = $validator->validate($file);
+
+        if (count($errors)) {
+            $view->setStatusCode(400);
+            $view->setData($errors);
+        } else {
+            try {
+                $repo = $this->getDoctrine()->getManager()->getRepository("AppBundle:File");
+				$repo->update($file);
+                $view->setData($file);
+                $view->setStatusCode(200);
+            } catch (\Doctrine\DBAL\DBALException $e) {
+                $view->setStatusCode(500);
+                $view->setData($e->getMessage());
+            }
+        }
+
+        return $this->handleView($view);
     }
 
 
@@ -290,7 +409,7 @@ class FileController extends FOSRestController
     /**
      * @Route("/files/{id}/content", name="file_replace_content", requirements = {"id" = "\d+"})
      * @Method({"PUT"})
-     * @ParamConverter("file", class="AppBundle:File")
+     * @ParamConverter("file", class="AppBundle:File", options = {"repository_method" = "findNotDeleted"})
      * @ApiDoc(
      *     description = "Replace file content based on ID",
      *     statusCodes = {
@@ -304,7 +423,34 @@ class FileController extends FOSRestController
      * */
     public function updateFileContentAction(Request $request, File $file)
     {
+    	$view = new View();
+    	$path = $this->get("kernel")->getRootDir() . DIRECTORY_SEPARATOR . ".." . DIRECTORY_SEPARATOR . "uploads";
+    	$uploaded = $request->files->get("file");
+    	$newFilename = $this->generateUniqueInternalFilename();
 
+    	if ("" != $file->getInternalFilename() && file_exists($path . DIRECTORY_SEPARATOR . $file->getInternalFilename())) {
+    		unlink($path . DIRECTORY_SEPARATOR . $file->getInternalFilename());
+    	}
+
+    	try {
+    		$file->setFilename($uploaded->getClientOriginalName());
+    		$file->setInternalFilename($newFilename);
+    		$repo = $this->getDoctrine()->getManager()->getRepository("AppBundle:File");
+			$repo->update($file);
+
+    		$uploaded->move($path , $newFilename);
+    		$view->setStatusCode(204);
+    	} catch (Exception $e) {
+    		$view->setStatusCode(500);
+    		$view->setData($e);
+    	}
+
+    	return $this->handleView($view);
+    }
+
+
+    public function generateUniqueInternalFilename(){
+    	return bin2hex(openssl_random_pseudo_bytes(64));
     }
 
 }
