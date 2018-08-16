@@ -2,58 +2,85 @@
 
 namespace AppBundle\Entity;
 
+use Doctrine\ORM\Mapping as ORM;
+
 /**
  * User
+ *
+ * @ORM\Table(name="user")
+ * @ORM\Entity(repositoryClass="AppBundle\Repository\UserRepository")
  */
 class User
 {
     /**
      * @var int
+     *
+     * @ORM\Column(name="id", type="integer")
+     * @ORM\Id
+     * @ORM\GeneratedValue(strategy="AUTO")
      */
     private $id;
 
     /**
      * @var string
+     *
+     * @ORM\Column(name="first_name", type="string", length=190)
      */
     private $firstName;
 
     /**
      * @var string
+     *
+     * @ORM\Column(name="middle_name", type="string", length=190, nullable=true)
      */
     private $middleName;
 
     /**
      * @var string
+     *
+     * @ORM\Column(name="last_name", type="string", length=190, nullable=true)
      */
     private $lastName;
 
     /**
      * @var string
+     *
+     * @ORM\Column(name="login", type="string", length=190, unique=true)
      */
     private $login;
 
     /**
      * @var string
+     *
+     * @ORM\Column(name="email", type="string", length=190, unique=true)
      */
     private $email;
 
     /**
      * @var bool
+     *
+     * @ORM\Column(name="status", type="boolean")
      */
     private $status;
 
     /**
      * @var \DateTime
+     *
+     * @ORM\Column(name="created_at", type="datetime", nullable=true)
      */
     private $createdAt;
 
     /**
      * @var \DateTime
+     *
+     * @ORM\Column(name="updated_at", type="datetime", nullable=true)
      */
     private $updatedAt;
 
     /**
      * @var \DateTime
+     *
+     * @ORM\Column(name="deleted_at", type="datetime", nullable=true)
      */
     private $deletedAt;
 
