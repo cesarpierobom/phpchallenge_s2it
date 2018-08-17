@@ -65,6 +65,15 @@ swiftmailer:
     password: '%mailer_password%'
     spool: { type: memory }
 
+
+
+fos_rest:
+    format_listener:
+        rules:
+            priorities: [json]
+            fallback_format: json
+            prefer_extension: true
+
 # Nelmio/Api-Doc-Bundle Configuration
 
 nelmio_api_doc:

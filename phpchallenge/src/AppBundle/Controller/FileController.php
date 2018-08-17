@@ -20,7 +20,7 @@ class FileController extends FOSRestController
 {
 
     /**
-     * @Route("/files", name = "file_list")
+     * @Route("/api/v1/files", name = "file_list")
      * @Method({"GET"})
      * @ApiDoc(
      *     resource = true,
@@ -84,7 +84,7 @@ class FileController extends FOSRestController
 
 
     /**
-     * @Route("/files/{id}", name = "file_show", requirements = {"id" = "\d+"})
+     * @Route("/api/v1/files/{id}", name = "file_show", requirements = {"id" = "\d+"})
      * @Method({"GET"})
      * @ParamConverter("files", class="AppBundle:File", options = {"repository_method" = "findNotDeleted"})
      * @ApiDoc(
@@ -112,11 +112,12 @@ class FileController extends FOSRestController
 
 
     /**
-     * @Route("/files/{id}/content", name="get_file_content", requirements={"id" = "\d+"})
+
+     * @Route("/api/v1/files/{id}/content", name="get_file_content", requirements={"id" = "\d+"})
      * @Method({"GET"})
      * @ParamConverter("file", class="AppBundle:File", options = {"repository_method" = "findNotDeleted"})
      * @ApiDoc(
-     *     description = "Returns the file content based on its ID. (Does not work in documentation sandbox)",
+     *     description = "Returns the file content based on its ID. (It may crash documentation sandbox)",
      *     statusCodes = {
      *         200 = "Returned when successful",
      *         403 = "Returned when the action is unauthorized",
@@ -138,8 +139,9 @@ class FileController extends FOSRestController
     	try {
     		if ("" != $file->getInternalFilename() && file_exists($filename)) {
     			$response = new BinaryFileResponse($filename);
+                $response->trustXSendfileTypeHeader();
     			$mimeTypeGuesser = new FileinfoMimeTypeGuesser();
-    			$response->headers->set("Content-Type", $mimeTypeGuesser->guess($file->getFilename()));
+    			$response->headers->set("Content-Type", $mimeTypeGuesser->guess($filename));
     			$response->setContentDisposition(ResponseHeaderBag::DISPOSITION_ATTACHMENT, $file->getFilename());
     			return $response;
     		} else {
@@ -156,7 +158,7 @@ class FileController extends FOSRestController
 
 
     /**
-     * @Route("/files", name="file_store")
+     * @Route("/api/v1/files", name="file_store")
      * @Method({"POST"})
      * @ApiDoc(
      *     description = "Inserts new file metadata in the database",
@@ -209,7 +211,7 @@ class FileController extends FOSRestController
 
 
     /**
-     * @Route("/files/{id}/content", name = "file_content_store", requirements = {"id" = "\d+"})
+     * @Route("/api/v1/files/{id}/content", name = "file_content_store", requirements = {"id" = "\d+"})
      * @Method({"POST"})
      * @ParamConverter("file", class="AppBundle:File", options = {"repository_method" = "findNotDeleted"})
      * @ApiDoc(
@@ -258,7 +260,7 @@ class FileController extends FOSRestController
 
 
     /**
-     * @Route("/files/{id}", name="file_delete", requirements = {"id" = "\d+"})
+     * @Route("/api/v1/files/{id}", name="file_delete", requirements = {"id" = "\d+"})
      * @Method({"DELETE"})
      * @ParamConverter("file", class="AppBundle:File", options = {"repository_method" = "findNotDeleted"})
      * @ApiDoc(
@@ -298,7 +300,7 @@ class FileController extends FOSRestController
 
 
     /**
-     * @Route("/files/{id}", name="file_replace_metadata", requirements = {"id" = "\d+"})
+     * @Route("/api/v1/files/{id}", name="file_replace_metadata", requirements = {"id" = "\d+"})
      * @Method({"PUT"})
      * @ParamConverter("file", class="AppBundle:File", options = {"repository_method" = "findNotDeleted"})
      * @ApiDoc(
@@ -349,7 +351,7 @@ class FileController extends FOSRestController
 
 
     /**
-     * @Route("/files/{id}", name="file_update_metadata", requirements = {"id" = "\d+"})
+     * @Route("/api/v1/files/{id}", name="file_update_metadata", requirements = {"id" = "\d+"})
      * @Method({"PATCH"})
      * @ParamConverter("file", class="AppBundle:File", options = {"repository_method" = "findNotDeleted"})
      * @ApiDoc(
@@ -407,11 +409,14 @@ class FileController extends FOSRestController
 
 
     /**
-     * @Route("/files/{id}/content", name="file_replace_content", requirements = {"id" = "\d+"})
+     * @Route("/api/v1/files/{id}/content", name="file_replace_content", requirements = {"id" = "\d+"})
      * @Method({"PUT"})
      * @ParamConverter("file", class="AppBundle:File", options = {"repository_method" = "findNotDeleted"})
      * @ApiDoc(
      *     description = "Replace file content based on ID",
+     *     parameters = {
+     *         {"name" = "file", "dataType" = "file", "required" = true, "description" = "File to be uploaded"}
+     *     },
      *     statusCodes = {
      *         204 = "Returned when successful",
      *         403 = "Returned when the action is unauthorized",
