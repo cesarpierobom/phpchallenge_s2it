@@ -170,9 +170,9 @@ class FileController extends FOSRestController
      *     },
      *     statusCodes = {
      *         201 = "Returned when the operation is successful and a new resource is created",
-     *         403 = "Returned when the action is unauthorized",
-     *         401 = "Returned when not authenticated",
      *         400 = "Returned when the request is invalid",
+     *         401 = "Returned when not authenticated",
+     *         403 = "Returned when the action is unauthorized",
      *         500 = "Returned when an error occurs",
      *     }
      * )
@@ -221,9 +221,10 @@ class FileController extends FOSRestController
      *     },
      *     statusCodes = {
      *         201 = "Returned when the operation is successful and a new resource is created",
-     *         403 = "Returned when the action is unauthorized",
-     *         401 = "Returned when not authenticated",
      *         400 = "Returned when the request is invalid",
+     *         401 = "Returned when not authenticated",
+     *         403 = "Returned when the action is unauthorized",
+     *         409 = "When the file already exists",
      *         500 = "Returned when an error occurs",
      *     }
      * )

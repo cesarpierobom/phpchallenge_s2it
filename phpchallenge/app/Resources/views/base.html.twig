@@ -1,12 +1,18 @@
-<!DOCTYPE html>
-<html>
+<!doctype html>
+<html class="no-js" lang="en">
     <head>
-        <meta charset="UTF-8" />
+        {% block metatags %}{% endblock %}
         <title>{% block title %}Welcome!{% endblock %}</title>
         {% block stylesheets %}{% endblock %}
-        <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}" />
+        {% block genericlinks %}{% endblock %}
+        
+        {% block earlyjavascripts %}{% endblock %}
+
     </head>
     <body>
+        <!--[if lte IE 9]>
+            <p class="browserupgrade">You are using an <strong>outdated</strong> browser. Please <a href="https://browsehappy.com/">upgrade your browser</a> to improve your experience and security.</p>
+        <![endif]-->
         {% block body %}{% endblock %}
         {% block javascripts %}{% endblock %}
     </body>
