@@ -15,5 +15,3 @@ RUN apt-get update \
     && apt-get clean; rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /usr/share/doc/*
 
 WORKDIR "phpchallenge"
-
-RUN chown -R www-data:www-data app/cache && chown -R www-data:www-data app/logs
