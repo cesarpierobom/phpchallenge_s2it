@@ -14,6 +14,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 use Symfony\Component\HttpFoundation\File\MimeType\FileinfoMimeTypeGuesser;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
 
 class FileController extends FOSRestController
@@ -184,8 +185,8 @@ class FileController extends FOSRestController
 
         $repo = $this->getDoctrine()->getManager()->getRepository("AppBundle:File");
 
-        $file->setFilename($request->get("filename"))
-        ->setStatus((integer) $request->get("status"))
+        $file->setFilename($request->request->get("filename"))
+        ->setStatus($request->request->has("status") ? (integer) $request->request->get("status"): 1)
         ->setCreatedAt(date_create_from_format("Y-m-d H:i:s", date("Y-m-d H:i:s")));
 
         $validator = $this->get("validator");
@@ -200,6 +201,7 @@ class FileController extends FOSRestController
 
                 $view->setData($file);
                 $view->setStatusCode(201);
+                $view->setHeader("Location", $this->generateUrl("file_show", array("id"=>$file->getId()), UrlGeneratorInterface::ABSOLUTE_URL));
             } catch (\Doctrine\DBAL\DBALException $e) {
                 $view->setStatusCode(500);
                 $view->setData($e->getMessage());
@@ -250,8 +252,8 @@ class FileController extends FOSRestController
 
     		$uploaded->move($path , $newFilename);
     		$view->setStatusCode(201);
-    		$view->setHeader("Location", $this->generateUrl("get_file_content", array("id"=>$file->getId())));
-    	} catch (Exception $e) {
+    		$view->setHeader("Location", $this->generateUrl("get_file_content", array("id"=>$file->getId()), UrlGeneratorInterface::ABSOLUTE_URL ));
+    	} catch (\Exception $e) {
     		$view->setStatusCode(500);
     		$view->setData($e);
     	}
@@ -291,7 +293,7 @@ class FileController extends FOSRestController
 			$repo->update($file);
 
             $view->setStatusCode(204);
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             $view->setData(array("message" => $e->getMessage()));
             $view->setStatusCode(500);
         }
@@ -446,7 +448,7 @@ class FileController extends FOSRestController
 
     		$uploaded->move($path , $newFilename);
     		$view->setStatusCode(204);
-    	} catch (Exception $e) {
+    	} catch (\Exception $e) {
     		$view->setStatusCode(500);
     		$view->setData($e);
     	}

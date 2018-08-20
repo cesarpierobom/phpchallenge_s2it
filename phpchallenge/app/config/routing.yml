@@ -3,6 +3,9 @@ app:
     type: annotation
     prefix: /
 
+base_api_v1:
+    path: /api/v1/
+
 NelmioApiDocBundle:
     resource: "@NelmioApiDocBundle/Resources/config/routing.yml"
     prefix:   /api/doc

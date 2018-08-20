@@ -48,7 +48,7 @@ class File
     /**
      * @var integer
      *
-     * @ORM\Column(name="status", type="boolean")
+     * @ORM\Column(name="status", type="boolean", options={"default" : 1})
      * @Serializer\Type("integer")
      * @Assert\Type("integer")
      */

@@ -17,17 +17,23 @@
 {% endblock %}
 
 {% block earlyjavascripts %}
-	<script type="text/javascript">
-		(function(e,t,n){var r=e.querySelectorAll("html")[0];r.className=r.className.replace(/(^|\s)no-js(\s|$)/,"$1js$2")})(document,window,0);
-	</script>
+    <script type="text/javascript">
+        (function(e,t,n){var r=e.querySelectorAll("html")[0];r.className=r.className.replace(/(^|\s)no-js(\s|$)/,"$1js$2")})(document,window,0);
+    </script>
+
+    <script type="text/javascript">
+        const api_v1 = "{{ api_url }}";
+    </script>
 {% endblock %}
 
 
 
 {% block stylesheets %}
-	<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.2.0/css/all.css" integrity="sha384-hWVjflwFxL6sNzntih27bfxkr27PmbbK/iSvJ+a4+0owXq79v+lsFkW54bOGbiDQ" crossorigin="anonymous">
-	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
-	<link rel="stylesheet" href="{{ asset('css/main.css') }}" />
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+
+    <link rel="stylesheet" href="{{ asset('css/main.css') }}" />
+
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 {% endblock %}
 
 
@@ -35,107 +41,80 @@
 
 
 {% block body %}
-<!-- Wrap all page content here -->
-<div class="container">
-    <div class="row row-offcanvas row-offcanvas-left">
-        <div class="sidebar-offcanvas">
-            <div class="navbar navbar-light bg-light">
-                <a class="navbar-brand hidden-xs" href="#">Brand</a>
-                <a class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
-                    <span class="icon-bar"></span>
-                    <span class="icon-bar"></span>
-                    <span class="icon-bar"></span>
-                </a>
 
-                <div class="navbar-collapse collapse">
-                    <ul class="nav navbar-nav">
-                        <li><a href="#">Home</a></li>
-                        <li><a href="#">Link</a></li>
-                        <li><a href="#">More</a></li>
-                        <li><a href="#">Options</a></li>
-                    </ul>
-                </div>
+<div class="modal" id="modalMessage" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalMessageLabel">Modal title</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
             </div>
-        </div>
-        <div class="col-12 content">
-            <div class="row">
-
-				<form class="box" method="post" action="" enctype="multipart/form-data">
-					<div class="box__input">
-						<input class="box__file" type="file" name="files[]" id="file" data-multiple-caption="{count} files selected" multiple />
-						<label for="file"><strong>Choose a file</strong><span class="box__dragndrop"> or drag it here</span>.</label>
-						<button class="box__button" type="submit">Upload</button>
-					</div>
-					<div class="box__uploading">Uploading&hellip;</div>
-					<div class="box__success">Done!</div>
-					<div class="box__error">Error! <span></span>.</div>
-				</form>
-
-
-				<div class="modal fade" id="modalMessage" tabindex="-1" role="dialog" aria-labelledby="modalMessageLabel" aria-hidden="true">
-					<div class="modal-dialog" role="document">
-						<div class="modal-content">
-							<div class="modal-header">
-								<h5 class="modal-title" id="modalMessageLabel"></h5>
-								<button type="button" class="close" data-dismiss="modal" aria-label="Close">
-									<span aria-hidden="true">&times;</span>
-								</button>
-							</div>
-							<div class="modal-body" id="modalMessageBody"></div>
-							<div class="modal-footer" id="modalMessageButtons">
-								<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-								<button type="button" class="btn btn-primary">OK</button>
-							</div>
-						</div>
-					</div>
-				</div>
-
-
-                <div class="jumbotron">
-                    <h2>Off-canvas Float Example</h2>
-                    <p>This is an example to show the potential of an offcanvas layout pattern in Bootstrap. Try some responsive-range viewport sizes to see it in action.</p>
-                </div>
-                <div class="col-sm-6 col-lg-6">
-                    <h2>Heading</h2>
-                    <p>Donec id elit non mi porta gravida at eget metus. Fusce dapibus, tellus ac cursus commodo, tortor mauris condimentum nibh, ut fermentum massa justo sit amet risus. Etiam porta sem malesuada magna mollis euismod. Donec sed odio dui.
-                        </p>
-                    <p><a class="btn btn-default" href="#">View details »</a></p>
-                </div>
-                <!--/span-->
-                <div class="col-sm-6 col-lg-6">
-                    <h2>Heading</h2>
-                    <p>Donec id elit non mi porta gravida at eget metus. Fusce dapibus, tellus ac cursus commodo, tortor mauris condimentum nibh, ut fermentum massa justo sit amet risus. Etiam porta sem malesuada magna mollis euismod. Donec sed odio dui.
-                        </p>
-                    <p><a class="btn btn-default" href="#">View details »</a></p>
-                </div>
-                <!--/span-->
-                <div class="col-sm-6 col-lg-4">
-                    <h2>Heading</h2>
-                    <p>Donec id elit non mi porta gravida at eget metus. Fusce dapibus, tellus ac cursus commodo, tortor mauris condimentum nibh, ut fermentum massa justo sit amet risus. Etiam porta sem malesuada magna mollis euismod. Donec sed odio dui.
-                        </p>
-                    <p><a class="btn btn-default" href="#">View details »</a></p>
-                </div>
-                <!--/span-->
-                <div class="col-sm-6 col-lg-4">
-                    <h2>Heading</h2>
-                    <p>Donec id elit non mi porta gravida at eget metus. Fusce dapibus, tellus ac cursus commodo, tortor mauris condimentum nibh, ut fermentum massa justo sit amet risus. Etiam porta sem malesuada magna mollis euismod. Donec sed odio dui.
-                        </p>
-                    <p><a class="btn btn-default" href="#">View details »</a></p>
-                </div>
-                <!--/span-->
-                <div class="col-sm-6 col-lg-4">
-                    <h2>Heading</h2>
-                    <p>Donec id elit non mi porta gravida at eget metus. Fusce dapibus, tellus ac cursus commodo, tortor mauris condimentum nibh, ut fermentum massa justo sit amet risus. Etiam porta sem malesuada magna mollis euismod. Donec sed odio dui.
-                        </p>
-                    <p><a class="btn btn-default" href="#">View details »</a></p>
-                </div>
-                <!--/span-->
+            <div class="modal-body" id="modalMessageBody">
+                <p>Modal body text goes here.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-dismiss="modal">OK</button>
             </div>
         </div>
     </div>
-    <hr>
-
 </div>
+
+
+<div id="loader" class="d-none"></div>
+<div class="container-fluid h-100 background">
+    <div class="row height33"></div>
+    <div class="row main">
+        <div class="col-sm-2">
+        </div>
+        <div class="col-sm-4">
+            <div class="card h-100">
+                <div class="card-header text-center">
+                    File Upload
+                </div>
+                <div class="card-body">
+                    <form class="form h-100 text-center" action="javascript:void(0)" method="POST">
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <input type="file" class="form__input-file--hidden" name="file" id="file" multiple="">
+                                <label for="file" class="margintop5"><strong>Choose files</strong> or drag and drop them here</label>
+                                <div id="icon">
+                                    <i class="material-icons">folder_open</i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <div id="counter"> 0 files</div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <button class="btn btn-primary btn-sm" id="submit" type="button">Upload</button>
+                                <button class="btn btn-danger btn-sm" id="reset" type="button">Reset</button>
+
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-4">
+            <div class="card h-100 card-max" >
+                <div class="card-header text-center">
+                    Results
+                </div>
+                <div class="card-body" id="results">
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
 
 {% endblock %}
 
@@ -146,10 +125,16 @@
 
 
 {% block javascripts %}
-	<script src="{{ asset("js/base/modernizr-custom.js") }}"></script>
-	<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
-	<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
+    <script src="{{ asset("js/base/modernizr-custom.js") }}"></script>
+
+    <script src="https://code.jquery.com/jquery-3.3.1.js" integrity="sha256-2Kok7MbOyxpgUVvAk/HJ2jigOSYS2auK4Pfzbm7uH60=" crossorigin="anonymous"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.4/umd/popper.js" integrity="sha256-5mrieoHKmiiWf93sjVifOZelwu2Pa2xrDii5Uz3+8E8=" crossorigin="anonymous"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.4/umd/popper-utils.js" integrity="sha256-f0O5YW7WctUrM4NEZUjQrOqrY2dhN61iXXZ77z62do8=" crossorigin="anonymous"></script>
+
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
+
 	<script src="{{ asset("js/home/home.js") }}"></script>
 {% endblock %}
 

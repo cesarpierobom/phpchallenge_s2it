@@ -1,73 +1,117 @@
 'use strict';
 
-$(document).ready(function(){
-	$(".box")
+var droppedFiles = [];
+
+$(document).ready(function () {
+
+	$(".form")
+	.on("drag dragstart dragend dragover dragenter dragleave drop", function(e){
+		e.preventDefault();
+		e.stopPropagation();
+	})
+	.on("dragover dragenter", function () {
+		$("#icon").empty();
+		$("#icon").append("<i class='material-icons'>cloud_upload</i>");
+	})
+	.on("dragleave dragend drop", function () {
+		$("#icon").empty();
+		$("#icon").append("<i class='material-icons'>folder_open</i>");
+	})
+	.on("drop", function(e){
+		$.each(e.originalEvent.dataTransfer.files, function (index, fileElement) {
+			droppedFiles.push(fileElement);
+		});
+
+		$("#counter").html(droppedFiles.length + " files");
+	});
+
+	$("#file").on("change", function (e) {
+		$.each(e.target.files, function (index, fileElement) {
+			droppedFiles.push(fileElement);
+		});
+
+		$("#file").val("");
+
+		$("#counter").html(droppedFiles.length + " files");
+
+	});
+
+	$("#submit").on("click", function () {
+		uploadFiles();
+	});
+
+	$("#reset").on("click", function () {
+		droppedFiles = [];
+		$("#counter").html("0 files");
+	});
 });
 
 
-var isAdvancedUpload = function () {
-	var div = document.createElement("div");
-	return (("draggable" in div) || ("ondragstart" in div && "ondrop" in div)) && "FormData" in window && "FileReader" in window;
-}();
-
-
-
-function uploadFiles(id, file) {
-	if ($("#file")[0].files) {
-		$.each($("#file")[0].files, function (index, fileElement) {
-			storeMetadata(fileElement);
-		});
-	}
+function showloader(){
+	$("#loader").removeClass("d-none");
 }
 
+function hideLoader(){
+	$("#loader").addClass("d-none");
+}
+
+function uploadFiles() {
+	if (!droppedFiles) {
+		return false;
+	}
+
+	showloader();
+
+	$.each(droppedFiles, function (index, fileElement) {
+		storeMetadata(fileElement);
+	});
+
+	resetCounter();
+	hideLoader();
+}
+
+function resetCounter(){
+	droppedFiles = [];
+	$("#counter").html("0 files");
+}
 
 function storeMetadata(fileElement) {
 	var request = $.ajax({
-		url: location.origin + "/api/v1/files",
-		method: "POST", 
+		url: api_v1 + "files",
+		method: "POST",
 		datatype: "json",
-		processData: false,
 		cache: false,
-		before: function () {
-
-		},
 		data:{
 			filename:fileElement.name
 		}
 	})
-	.done(function(data, textStatus, jqXHR){
+	.done(function (data, textStatus, jqXHR) {
 		switch(jqXHR.status) {
 		    case 201:
 		    	var id = data.id;
-		    	storeFile(id, fileElement);
+		    	storeFile(id, fileElement, jqXHR);
 		        break;
 		    default:
 		    	showMessageDialog("Results","This is unexpected. Looks like something wrong happened. Please try again.");
-		    	console.log("unexpected success status");
-		    	console.log(data);
 		}
 	})
-	.fail(function(error){
-		$(".box").addClass("is-error");
+	.fail(function (jqXHR, textStatus, errorThrown) {
+
 		switch(jqXHR.status) {
 		    case 401:
-		    	showMessageDialog("Error", "You need to be logged in to store files.");
+		    	appendResult(fileElement.name + " : Unauthenticated.",2);
 		        break;
 		    case 403:
-		    	showMessageDialog("Error", "You are not allowed to store files.");
-		        break;
-		    	showMessageDialog("Error", "There was an error with your request.");
+		    	appendResult(fileElement.name + " : Unauthorized.",2);
 		        break;
 		    case 400:
 		    case 409:
 		    case 404:
 		    case 500:
-		    	showMessageDialog("Error", "There was an error with your request.");
+		    	appendResult(fileElement.name + " : Error, please try again.",2);
 		        break;
 		    default:
 		    	showMessageDialog("Results", "This is unexpected. Looks like something wrong happened. Please try again.");
-		    	console.log("unexpected failure status");
-		    	console.log(error);
 		}
 	})
 	.always(function(data){
@@ -76,57 +120,49 @@ function storeMetadata(fileElement) {
 }
 
 
-function storeFile(id, fileElement){
+function storeFile(id, fileElement, response){
 	var ajaxData = new FormData();
+
 	ajaxData.append("file", fileElement);
 
 	$.ajax({
-		url: location.origin + "/api/v1/files/",
-		method: "POST", 
-		datatype: "json",
+		url: response.getResponseHeader("Location") + "/content",
+		method: "POST",
 		processData: false,
+    	contentType: false,
 		cache: false,
-		before: function () {
-
-		},
+		dataType:"text",
 		data:ajaxData
 	})
-	.done(function(data){
-		$(".box").addClass("is-success");
-
+	.done(function(data, textStatus, jqXHR){
 		switch(jqXHR.status) {
 		    case 201:
-		    	$(".box").addClass("is-success");
+		    appendResult("Success! The " + fileElement.name + " file was uploaded!", 1,jqXHR.getResponseHeader("Location"));
 		        break;
 		    default:
 		    	showMessageDialog("Results","This is unexpected. Looks like something wrong happened. Please try again.");
-		    	console.log("unexpected success status");
-		    	console.log(data);
 		}
 	})
-	.fail(function(error){
-		$(".box").addClass("is-error");
+	.fail(function(jqXHR, textStatus, errorThrown){
 		switch(jqXHR.status) {
 		    case 401:
-		    	showMessageDialog("Error", "You need to be logged in to store files.");
+		    	appendResult(fileElement.name + " : Unauthenticated.",2);
 		        break;
 		    case 403:
-		    	showMessageDialog("Error", "You are not allowed to store files.");
+		    	appendResult(fileElement.name + " : Unauthorized.",2);
 		        break;
 		    case 400:
 		    case 404:
 		    case 409:
 		    case 500:
-		    	showMessageDialog("Error", "There was an error with your request.");
+		    	appendResult(fileElement.name + " : Error, please try again.",2);
 		        break;
 		    default:
 		    	showMessageDialog("Results", "This is unexpected. Looks like something wrong happened. Please try again.");
-		    	console.log("unexpected failure status");
-		    	console.log(error);
 		}
 	})
 	.always(function(data){
-		$(".box").removeClass("is-uploading");
+
 	});
 }
 
@@ -138,151 +174,44 @@ function showMessageDialog(title = null, body = null){
 	$("#modalMessage").modal();
 }
 
+function dismiss(element){
+	$(element).parent("div").parent("div").remove();
+}
 
-;( function( $, window, document, undefined )
-{
-	// feature detection for drag&drop upload
+function getFileContent(id){
+	window.open(api_v1 + "files/" + id + "/content", "_blank");
+}
 
-	// var isAdvancedUpload = function()
-	// {
-	// 	var div = document.createElement( "div" );
-	// 	return ( ( 'draggable' in div ) || ( 'ondragstart' in div && 'ondrop' in div ) ) && 'FormData' in window && 'FileReader' in window;
-	// }();
+function appendResult(message, color = 1, url = null){
+	var borderclass = "";
+	var textclass = "";
 
+	switch(color){
+		case 1:
+		borderclass = "border-success";
+			textclass = "text-success";
+			break;
 
-	// applying the effect for every form
+		case 2:
+			borderclass = "border-danger";
+			textclass = "text-danger";
+			break;
+	}
 
-	$( '.box' ).each( function()
-	{
-		var $form		 = $( this ),
-			$input		 = $form.find( 'input[type="file"]' ),
-			$label		 = $form.find( 'label' ),
-			$errorMsg	 = $form.find( '.box__error span' ),
-			$restart	 = $form.find( '.box__restart' ),
-			droppedFiles = false,
-			showFiles	 = function( files )
-			{
-				$label.text( files.length > 1 ? ( $input.attr( 'data-multiple-caption' ) || '' ).replace( '{count}', files.length ) : files[ 0 ].name );
-			};
+	var newCard = $("<div class='card " + borderclass + " mb-3' ></div>");
+	var newCardBody = $("<div class='card-body " + textclass + "'>");
+	var newCardText = $("<p class='card-text'>" + message + "</p>");
+	var newCardDismissButton = $("<button type='button' class='btn btn-sm btn-danger' onclick='dismiss(this)'>Dismiss</button>");
 
-		// letting the server side to know we are going to make an Ajax request
-		$form.append( '<input type="hidden" name="ajax" value="1" />' );
+	$(newCardBody).append(newCardText);
 
-		// automatically submit the form on file select
-		$input.on( 'change', function( e )
-		{
-			showFiles( e.target.files );
-		});
+	if (url) {
+		var newCardDownloadButton = $("<a href='" + url + "' target='_blank' class='btn btn-sm btn-primary'>Download</a>");
+		$(newCardBody).append(newCardDownloadButton);
+	}
 
+	$(newCardBody).append(newCardDismissButton);
+	$(newCard).append(newCardBody);
+	$("#results").append(newCard);
 
-		// drag&drop files if the feature is available
-		if( isAdvancedUpload )
-		{
-			$form
-			.addClass( 'has-advanced-upload' ) // letting the CSS part to know drag&drop is supported by the browser
-			.on( 'drag dragstart dragend dragover dragenter dragleave drop', function( e )
-			{
-				// preventing the unwanted behaviours
-				e.preventDefault();
-				e.stopPropagation();
-			})
-			.on( 'dragover dragenter', function() //
-			{
-				$form.addClass( 'is-dragover' );
-			})
-			.on( 'dragleave dragend drop', function()
-			{
-				$form.removeClass( 'is-dragover' );
-			})
-			.on( 'drop', function( e )
-			{
-				droppedFiles = e.originalEvent.dataTransfer.files; // the files that were dropped
-				showFiles( droppedFiles );
-
-			});
-		}
-
-
-		// if the form was submitted
-
-		$form.on( 'submit', function( e )
-		{
-			// preventing the duplicate submissions if the current one is in progress
-			if( $form.hasClass( 'is-uploading' ) ) return false;
-
-			$form.addClass( 'is-uploading' ).removeClass( 'is-error' );
-
-			if( isAdvancedUpload ) // ajax file upload for modern browsers
-			{
-				e.preventDefault();
-
-				// gathering the form data
-				var ajaxData = new FormData( $form.get( 0 ) );
-				if( droppedFiles )
-				{
-					$.each( droppedFiles, function( i, file )
-					{
-						ajaxData.append( $input.attr( 'name' ), file );
-					});
-				}
-
-				// ajax request
-				$.ajax(
-				{
-					url: 			$form.attr( 'action' ),
-					type:			$form.attr( 'method' ),
-					data: 			ajaxData,
-					dataType:		'json',
-					cache:			false,
-					contentType:	false,
-					processData:	false,
-					complete: function()
-					{
-						$form.removeClass( 'is-uploading' );
-					},
-					success: function( data )
-					{
-						$form.addClass( data.success == true ? 'is-success' : 'is-error' );
-						if( !data.success ) $errorMsg.text( data.error );
-					},
-					error: function()
-					{
-						alert( 'Error. Please, contact the webmaster!' );
-					}
-				});
-			}
-			else // fallback Ajax solution upload for older browsers
-			{
-				var iframeName	= 'uploadiframe' + new Date().getTime(),
-					$iframe		= $( '<iframe name="' + iframeName + '" style="display: none;"></iframe>' );
-
-				$( 'body' ).append( $iframe );
-				$form.attr( 'target', iframeName );
-
-				$iframe.one( 'load', function()
-				{
-					var data = $.parseJSON( $iframe.contents().find( 'body' ).text() );
-					$form.removeClass( 'is-uploading' ).addClass( data.success == true ? 'is-success' : 'is-error' ).removeAttr( 'target' );
-					if( !data.success ) $errorMsg.text( data.error );
-					$iframe.remove();
-				});
-			}
-		});
-
-
-		// restart the form if has a state of error/success
-
-		$restart.on( 'click', function( e )
-		{
-			e.preventDefault();
-			$form.removeClass( 'is-error is-success' );
-			$input.trigger( 'click' );
-		});
-
-		// Firefox focus bug fix for file input
-		$input
-		.on( 'focus', function(){ $input.addClass( 'has-focus' ); })
-		.on( 'blur', function(){ $input.removeClass( 'has-focus' ); });
-	});
-
-})( jQuery, window, document );
+}

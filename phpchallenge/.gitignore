@@ -3,6 +3,8 @@
 /app/cache/*
 /app/config/parameters.yml
 /app/logs/*
+/uploads/*
+!uploads/.gitkeep
 !app/cache/.gitkeep
 !app/logs/.gitkeep
 /app/phpunit.xml
